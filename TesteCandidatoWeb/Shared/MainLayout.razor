@@ -1,0 +1,27 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Consulta CEP</PageTitle>
+
+<MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1">
+        <MudText Typo="Typo.h5">Consulta CEP</MudText>
+        <MudSpacer />
+        <MudToggleIconButton @bind-Toggled="@_isDarkMode"
+                             Icon="@Icons.Material.Filled.DarkMode" Title="Alterar para Tema Escuro"
+                             ToggledIcon="@Icons.Material.Filled.LightMode" ToggledTitle="Alterar para Tema Claro" />
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer Class="pt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme _theme = new();
+    private bool _isDarkMode = true;
+}

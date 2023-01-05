@@ -1,0 +1,168 @@
+﻿@page "/"
+@using TesteCandidatoWeb.Models;
+
+@inject EnderecoService enderecoService
+@inject ISnackbar Snackbar
+
+<PageTitle>Buscar Cep</PageTitle>
+
+<MudStack Spacing="4">
+    <MudPaper Elevation="2" Class="px-6 py-2">
+        <MudStack>
+            <MudText Typo="Typo.h6">Configurações</MudText>
+            <MudDivider />
+            <MudSwitch Color="Color.Primary" T="bool" Checked="SearchInDatabase"
+                       Label="@(SearchInDatabase ? "Buscar na base de dados" : "Buscar em ViaCep")"
+                       CheckedChanged="(v) => OnChangeCheck((bool) v)" />
+        </MudStack>
+    </MudPaper>
+
+    <MudTabs @ref="tabs" @bind-ActivePanelIndex="ActiveIndex"
+             Elevation="2" ApplyEffectsToContainer="true" Rounded="true" Centered="true" Border="true" PanelClass="pa-6">
+        <MudTabPanel ID="@(CEP_TAB_PANEL_ID)" Text="Buscar por CEP">
+            <MudForm>
+                <MudTextField @bind-Value="cep" Label="CEP" Placeholder="Ex.: 01001000 ou 01001-000"></MudTextField>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_processing"
+                           OnClick="() => SearchByCep()">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Processando</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Buscar</MudText>
+                    }
+                </MudButton>
+            </MudForm>
+        </MudTabPanel>
+        <MudTabPanel ID="@(UF_TAB_PANEL_ID)" Text="Buscar por UF" Disabled="!SearchInDatabase">
+            <MudForm>
+                <MudTextField @bind-Value="uf" Label="UF" Placeholder="Ex.: SP"></MudTextField>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_processing"
+                           OnClick="() => SearchByUf()">
+                    @if (_processing)
+                    {
+                        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                        <MudText Class="ms-2">Processando</MudText>
+                    }
+                    else
+                    {
+                        <MudText>Buscar</MudText>
+                    }
+                </MudButton>
+            </MudForm>
+        </MudTabPanel>
+    </MudTabs>
+
+    <MudPaper Elevation="2" Class="px-6 py-2">
+        <MudStack>
+            @if (Enderecos is null || Enderecos.Count == 0)
+            {
+                <MudText>Nenhum endereço para mostrar</MudText>
+            }
+            else
+            {
+                @foreach (var endereco in Enderecos)
+                {
+                    <MudPaper Elevation="1" Class="pa-2">
+                        <MudStack Spacing="1">
+                            <MudStack Row="true">
+                                <MudText><b>Logradouro:</b> @($" {TextOrDash(endereco.Logradouro)}")</MudText>
+                                    <MudText><b>Bairro</b>: @($" {TextOrDash(endereco.Bairro)}")</MudText>
+                                    <MudText><b>Localidade:</b> @($" {TextOrDash(endereco.Localidade)}")</MudText>
+                                    <MudText><b>UF:</b> @($" {TextOrDash(endereco.Uf)}")</MudText>
+                                </MudStack>
+                                <MudStack Row="true">
+                                    <MudText><b>Complemento:</b> @($" {TextOrDash(endereco.Complemento)}")</MudText>
+                                    <MudText><b>CEP:</b> @($" {TextOrDash(endereco.Cep)}")</MudText>
+                                    <MudText><b>DDD:</b> @($" {TextOrDash(endereco.Ddd)}")</MudText>
+                                </MudStack>
+                                <MudStack Row="true">
+                                    <MudText><b>GIA:</b> @($" {TextOrDash(endereco.Gia)}")</MudText>
+                                    <MudText><b>SIAFI:</b> @($" {TextOrDash(endereco.Siafi)}")</MudText>
+                                    <MudText><b>IBGE:</b> @($" {TextOrDash(endereco.Ibge)}")</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudPaper>
+                }
+            }
+        </MudStack>
+    </MudPaper>
+</MudStack>
+
+@code {
+    private MudTabs? tabs;
+
+    private const string CEP_TAB_PANEL_ID = "pn_cep";
+    private const string UF_TAB_PANEL_ID = "pn_uf";
+
+    public bool SearchInDatabase { get; set; } = true;
+    private bool _processing = false;
+
+    public int ActiveIndex { get; set; }
+    public string cep { get; set; }
+    public string uf { get; set; }
+
+    private static char AllUpperCase(char c) => c.ToString().ToUpperInvariant()[0];
+
+    public List<Endereco>? Enderecos { get; set; }
+
+    public async void OnChangeCheck(bool value)
+    {
+        SearchInDatabase = value;
+
+        if (!value && ((string)tabs.ActivePanel.ID) == UF_TAB_PANEL_ID)
+            tabs.ActivatePanel(CEP_TAB_PANEL_ID);
+    }
+
+    public async void SearchByCep()
+    {
+        try
+        {
+            _processing = true;
+            var endereco = await enderecoService.GetEndereco(cep, false);
+            if (endereco is not null)
+                Enderecos = new(new[] { endereco }!);
+            else
+                Enderecos = null;
+        }
+        catch
+        {
+            ShowErroMessage();
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    public async void SearchByUf()
+    {
+        try
+        {
+            _processing = true;
+            Enderecos = await enderecoService.GetEnderecosByUf(uf);
+        }
+        catch
+        {
+            ShowErroMessage();
+        }
+        finally
+        {
+            _processing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ShowErroMessage()
+    {
+        Snackbar.Add("Ocorreu um erro. Tente novamente.", Severity.Error);
+    }
+
+    public string TextOrDash(string? text)
+    {
+        return string.IsNullOrEmpty(text) ? "-" : text;
+    }
+}

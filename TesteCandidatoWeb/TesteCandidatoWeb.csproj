@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>72c641ab-8dae-4f65-8070-8d04a4252f7b</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.1" />
+    <PackageReference Include="MudBlazor" Version="6.1.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\Scripts\" />
+  </ItemGroup>
+
+</Project>
